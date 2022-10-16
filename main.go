@@ -57,7 +57,7 @@ func printPubKey(path string) {
 	// Convert public key object back to bytes.
 	pemBlockBytes, err = x509.MarshalPKIXPublicKey(tmp)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to convert public key objecdt back to bytes: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to convert public key object back to bytes: %s\n", err)
 		os.Exit(1)
 	}
 	base64Encoding = base64.StdEncoding.EncodeToString(pemBlockBytes)
