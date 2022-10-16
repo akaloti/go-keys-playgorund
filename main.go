@@ -28,7 +28,7 @@ func printPubKey(path string) {
 	}
 	fmt.Printf("Key type: %s\n", pemBlock.Type)
 
-	// Print PEM block in base 64. This produces the same output
+	// Print PEM block in base 64. This produces ALMOST the same output
 	// as doing `cat` on the key file.
 	fmt.Println("In base64:")
 	var base64Encoding string
@@ -36,6 +36,11 @@ func printPubKey(path string) {
 	pemBlockBytes = pemBlock.Bytes
 	base64Encoding = base64.StdEncoding.EncodeToString(pemBlockBytes)
 	fmt.Println(base64Encoding)
+
+	// Print PEM block in base 64 another way. This produces EXACTLY the same output
+	// as doing `cat` on the key file.
+	fmt.Println("In base64 (another way):")
+	pem.Encode(os.Stdout, pemBlock)
 
 	// Parse into object.
 	var pubkey *rsa.PublicKey
