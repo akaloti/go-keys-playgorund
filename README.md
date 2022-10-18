@@ -33,3 +33,10 @@ openssl x509 -in keys/rsa_prac.crt -noout -text
 openssl x509 -pubkey -noout -in keys/rsa_prac.crt
 ```
 
+## To Run
+
+``` bash
+go run main.go
+```
+
+See `output.txt` for the output of the above command.
