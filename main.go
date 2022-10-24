@@ -111,6 +111,10 @@ func trySignature() {
 	// fmt.Printf("PKCS1 signature, second time (deterministic): %s\n", sig)
 	// Since PKCS1-v1_5 is deterministic, the signatures should be equal.
 	fmt.Printf("sig == sig2: %t\n", bytes.Equal(sig, sig2))
+	if !bytes.Equal(sig, sig2) {
+		fmt.Fprintf(os.Stderr, "Didn't get same PKCS1 signature")
+		os.Exit(1)
+	}
 	err = rsa.VerifyPKCS1v15(pubkey, crypto.SHA256, hashed, sig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to verify signature: %s\n", err)
@@ -132,6 +136,10 @@ func trySignature() {
 	}
 	// Since PSS is randomized, these should not be equal.
 	fmt.Printf("sig == sig2: %t\n", bytes.Equal(sig, sig2))
+	if bytes.Equal(sig, sig2) {
+		fmt.Fprintf(os.Stderr, "RSA signature was same")
+		os.Exit(1)
+	}
 	err = rsa.VerifyPSS(pubkey, crypto.SHA256, hashed, sig, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to verify signature: %s\n", err)
