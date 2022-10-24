@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"crypto"
+	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
@@ -64,6 +68,79 @@ func printPubKey(path string) {
 	fmt.Println(base64Encoding)
 }
 
+func trySignature() {
+	var privkey *rsa.PrivateKey
+	var err error
+	privkey, err = rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to generate key: %s\n", err)
+		os.Exit(1)
+	}
+	var pubkey *rsa.PublicKey
+	var pubkeyTmp any
+	pubkeyTmp = privkey.Public()
+	pubkey = pubkeyTmp.(*rsa.PublicKey)
+	var ciphertext, decrypted, sig, sig2, hashed, msg []byte
+	var tmp [32]byte
+	msg = []byte("Test message!")
+	tmp = sha256.Sum256(msg)
+	hashed = tmp[:]
+
+	fmt.Println("=== PKCS1, encrypt with pub ===")
+	ciphertext, err = rsa.EncryptPKCS1v15(rand.Reader, pubkey, msg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to encrypt: %s\n", err)
+		os.Exit(1)
+	}
+	decrypted, err = rsa.DecryptPKCS1v15(rand.Reader, privkey, ciphertext)
+	fmt.Printf("Decrypted: %s\n", decrypted)
+	fmt.Printf("msg == decrypted: %t\n", bytes.Equal(msg, decrypted))
+
+	fmt.Println("=== PKCS1, encrypt (sign) with priv ===")
+	sig, err = rsa.SignPKCS1v15(rand.Reader, privkey, crypto.SHA256, hashed)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to sign: %s\n", err)
+		os.Exit(1)
+	}
+	// fmt.Printf("PKCS1 signature (deterministic): %s\n", sig)
+	sig2, err = rsa.SignPKCS1v15(rand.Reader, privkey, crypto.SHA256, hashed)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to sign the second time: %s\n", err)
+		os.Exit(1)
+	}
+	// fmt.Printf("PKCS1 signature, second time (deterministic): %s\n", sig)
+	// Since PKCS1-v1_5 is deterministic, the signatures should be equal.
+	fmt.Printf("sig == sig2: %t\n", bytes.Equal(sig, sig2))
+	err = rsa.VerifyPKCS1v15(pubkey, crypto.SHA256, hashed, sig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to verify signature: %s\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Successfully verified signature.\n")
+
+	fmt.Println("=== PSS, encrypt (sign) with priv ===")
+	// TODO: Play with opts, in case that's the issue.
+	sig, err = rsa.SignPSS(rand.Reader, privkey, crypto.SHA256, hashed, nil)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to sign: %s\n", err)
+		os.Exit(1)
+	}
+	sig2, err = rsa.SignPSS(rand.Reader, privkey, crypto.SHA256, hashed, nil)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to sign the second time: %s\n", err)
+		os.Exit(1)
+	}
+	// Since PSS is randomized, these should not be equal.
+	fmt.Printf("sig == sig2: %t\n", bytes.Equal(sig, sig2))
+	err = rsa.VerifyPSS(pubkey, crypto.SHA256, hashed, sig, nil)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to verify signature: %s\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Successfully verified signature.\n")
+}
+
 func main() {
-	printPubKey("keys/rsa_prac.pub")
+	// printPubKey("keys/rsa_prac.pub")
+	trySignature()
 }
