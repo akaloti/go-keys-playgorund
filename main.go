@@ -10,16 +10,15 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
 // Opens public key file and prints out contents.
 func printPubKey(path string) {
 	var keyFileContents []byte
-	keyFileContents, _ = ioutil.ReadFile(path)
-	// fmt.Println("Key file contents")
-	// fmt.Println(keyFileContents)
+	keyFileContents, _ = os.ReadFile(path)
+	fmt.Println("Key file contents in base64 (as obtained from file):")
+	fmt.Println(string(keyFileContents))
 
 	// Extract PEM block.
 	// Second return value is file data corresponding to remaining
@@ -34,7 +33,7 @@ func printPubKey(path string) {
 
 	// Print PEM block in base 64. This produces ALMOST the same output
 	// as doing `cat` on the key file.
-	fmt.Println("In base64:")
+	fmt.Println("In base64 again:")
 	var base64Encoding string
 	var pemBlockBytes []byte
 	pemBlockBytes = pemBlock.Bytes
@@ -149,6 +148,6 @@ func trySignature() {
 }
 
 func main() {
-	// printPubKey("keys/rsa_prac.pub")
+	printPubKey("keys/rsa_prac.pub")
 	trySignature()
 }
